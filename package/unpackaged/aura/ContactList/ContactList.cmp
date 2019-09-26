@@ -1,0 +1,187 @@
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:appHostable" controller="ContactsListController" access="global" >
+    <!--First Add jQuery and Select2 plugin library from static resource Using ltng:require tag-->  
+    <ltng:require styles="{! $Resource.select2 + '/select2-4.0.3/dist/css/select2.min.css'}" 
+                  scripts="{!join(',', 
+                           $Resource.jquery331 ,  
+                           $Resource.select2 + '/select2-4.0.3/dist/js/select2.js')
+                           }" afterScriptsLoaded="{!c.Init}"/> 
+    
+    <!--<aura:handler name="init" action="{!c.Init}" value="{!this}" /> -->
+    <!--Search -->
+    <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}"/> 
+    <aura:attribute name="objContact" type="contact" default="{'sobjectType':'contact'}"/>
+    <aura:attribute name="contactList" type="Contact[]"/>
+    <aura:attribute name="exportListContact" type="Contact[]"/>
+    
+    <aura:attribute type="Contact[]" name="importContactList" />
+    <aura:attribute name="selectedRowsExport" type="Contact[]"/>
+    <aura:attribute name="mycolumns" type="List"/>
+    <aura:attribute name="sortedBy" type="String" />
+    <aura:attribute name="sortedDirection" type="Boolean" default="true" />
+    <aura:attribute type="Boolean" name="fileTypeError" default="false" />
+    <!-- multiple select -->
+    <aura:attribute name="picklistOptsList" type="String[]"/>
+    <aura:attribute name="dataPost" type="Contact[]"/>
+    
+    <aura:attribute name="contactPost" type="contact" default="{'sobjectType':'Contact'}"/>
+    <!-- confirm dialog -->
+    <aura:attribute name="showModal" type="boolean" default="false" />
+    <aura:attribute name="IdforDelete" type="Id"/>
+    <!--set up records on page and paging -->
+    <aura:attribute name="recordsPerPages" type="Integer" default="3"/>
+    <aura:attribute name="pageNumber" type="Integer" default="1" />
+    <aura:attribute name="totalNumberPages" type="Integer" default="1"/>
+    <aura:attribute name="totalRecords" type="Integer" default="0"/>
+    <div class="slds-brand-band slds-brand-band_medium">
+        <div class="slds-card slds-has-bottom-magnet">
+            <!--header -->
+            <div class="slds-page-header slds-page-header_record-home">
+                <div class="slds-page-header__row">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__figure">
+                                <div class="slds-icon forceEntityIcon" style="background-color: #A094ED" data-aura-rendered-by="538:0" data-aura-class="forceEntityIcon">
+                                    <span class="slds-icon_container slds-icon-standard-contact">
+                                        <img data-aura-rendered-by="539:0" src="https://neosvn-dev-ed.my.salesforce.com/img/icon/t4v35/standard/contact_120.png" class="icon " alt="Contacts" title="Contacts"></img>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="slds-media__body slds-align-middle">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                            <span>取引先</span>
+                                            <span class="slds-page-header__title slds-truncate" title="Acme - 1,200 Widgets">検索</span>
+                                        </h1>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <div class="slds-page-header__col-actions">
+                    <div class="slds-page-header__controls">
+                        <ul class="slds-button-group-list">
+                            <li>
+                               
+                            </li>
+                        </ul>
+                    </div>
+                </div> -->
+                    
+                </div>
+            </div>
+            
+        </div>
+       
+        
+        <div class="slds-card slds-has-top-magnet slds-card__body slds-card__body_inner">
+            <div class="test-listViewManager slds-grid slds-grid--vertical " data-aura-class="forceListViewManager">
+            <div class="slds-grid slds-gutters slds-card-wrapper">
+                <div class="slds-col slds-size_6-of-12">
+                    <c:customLookupSF objectAPIName="account" IconName="standard:account" AlternativeText="Search Account" selectedRecord="{!v.selectedLookUpRecord}" label="Account"/>    
+                    <lightning:input type="tel" value="{!v.objContact.Phone}"  aura:id="Tel" label="Phone:" />
+                    <lightning:input type="email" value="{!v.objContact.Email}" aura:id="Email" label="Email:" /> 
+                </div>
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning:input type="String" value="{!v.objContact.Name}" aura:id="Email" label="ContactName" /> 
+                     <div class="slds-grid">
+                         <div class="slds-col slds-size_6-of-12" style="padding-right: 0px; padding-left: 0px">
+                             <lightning:input type="Date" value="{!v.objContact.BirthdateFrom__c}" aura:id="BirthdateFrom" dateStyle="short"  label="Birthdate From" /> 
+                         </div>
+                         <div class="slds-col slds-size_6-of-12" style="padding-right: 0px; padding-left: 10px">
+                             <lightning:input type="Date" value="{!v.objContact.BirthdateTo__c}" aura:id="BirthdateTo" dateStyle="short"  label="Birthdate To" /> 
+                         </div>
+                    </div>
+                    
+                    <div class="slds-form-element">  
+                        <label for="picklist">Level</label> <br/>
+                        <select style="width:100%" id="picklist" class="select2Class" multiple="multiple">
+                            <aura:iteration items="{!v.picklistOptsList}" var="opts">
+                                <option value="{!opts}"> {!opts} </option>
+                            </aura:iteration>     
+                        </select>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="slds-align_absolute-center"> 
+                <lightning:button variant="brand" label="検索" name="List View" onclick="{!c.searchContactList}"/> 
+                <lightning:button variant="brand" label="クリア" onclick="{!c.Clear}"/> 
+            </div>
+            
+            <!--for multi-select picklist [select2] -->    
+            <!--for multi-select picklist [select2] -->    
+            
+            
+            <div class="slds-grid"> 
+                <div class="slds-col slds-align-bottom slds-size_3-of-4  ">
+                    <div class="slds-grid"> 
+                        <div class="slds-col slds-size_1-of-8"> <b> 全{!v.totalRecords}件 • ページ {!v.pageNumber} / {!v.totalNumberPages} </b> </div>
+                        <div class="slds-col slds-size_1-of-8">
+                            <ui:inputSelect  aura:id="recordSize" change="{!c.onSelectChange}">
+                                <ui:inputSelectOption text="3" label="3" value="true"/>
+                                <ui:inputSelectOption text="5" label="5"/>
+                                <ui:inputSelectOption text="7" label="7"/>
+                            </ui:inputSelect>
+                        </div>
+                        <div class="slds-col slds-size_6-of-8">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slds-col slds-no-flex slds-align-bottom slds-size_1-of-4">
+                    <button class="slds-button slds-button--neutral" onclick="{!c.handleUpload}">Import CSV</button>
+                    <button class="slds-button slds-button--neutral" onclick="{!c.downloadAllCsv}">Download All CSV</button>
+                    <button class="slds-button slds-button--neutral" onclick="{!c.downloadSelectedCsv}">Download Selected CSV</button>
+                </div>
+            </div>
+            
+            
+            <div class="listViewContent slds-table--header">
+                <lightning:datatable showRowNumberColumn="true"
+                                     columns="{! v.mycolumns }"
+                                     data="{! v.contactList }"
+                                     keyField="id"
+                                     onsort="{!c.updateColumnSorting}"
+                                     onrowaction="{! c.handleRowAction }"
+                                     sortedBy="{!v.sortedBy}"
+                                     sortedDirection="{!v.sortedDirection}" 
+                                     onrowselection="{! c.updateListExport }"/>
+            </div>
+                    
+                    <div class="slds-align_absolute-center">            
+                        <lightning:button disabled="{!v.pageNumber == 1}" variant="brand" label="Previous" onclick="{! c.navigate }" />            
+                        <lightning:button disabled="{!v.pageNumber == v.totalNumberPages}" aura:id="previousPage" variant="brand" label="Next" onclick="{! c.navigate }" />
+                    </div>
+
+            
+           <!-- <input type="file" class="file" aura:id="file" accept=".csv, .CSV" />
+            <lightning:button variant="brand" label="Upload" onclick="{! c.handleUpload }" />
+            <lightning:spinner aura:id="csvSpinner" class="slds-hide" variant="brand" size="small"/> -->
+            </div>
+        </div>
+
+        <!--confirm dialog -->
+        <aura:if isTrue="{!v.showModal}">
+            <div style="height:640px">
+                <section role="dialog" tabindex="-1" class="slds-modal slds-modal_x-small slds-fade-in-open" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirmation</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium slds-p-left_large" id="modal-content-id-1">
+                            <p style='margin-left:18%'>Are you sure you want to delete?</p>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <lightning:button class="slds-button slds-button_brand" name='Yes' label='Yes' onclick='{!c.apexcall}'/>
+                            <lightning:button class="slds-button slds-button_brand" name='No' label='No' onclick='{!c.closeModal}'/>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+        </aura:if>
+        <!--end confirm dialog -->
+    </div>
+
+</aura:component>

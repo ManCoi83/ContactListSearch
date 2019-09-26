@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ContactSearchPackage</fullName>
+    <types>
+        <members>ContactsListController</members>
+        <members>customLookUpController</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>ContactList</members>
+        <members>ContactListApp</members>
+        <members>CustomLookup</members>
+        <members>customLookupResultSF</members>
+        <members>customLookupSF</members>
+        <members>selectedsObjectRecordEventSF</members>
+        <name>AuraDefinitionBundle</name>
+    </types>
+    <types>
+        <members>Contact.BirthdateFrom__c</members>
+        <members>Contact.BirthdateTo__c</members>
+        <members>Contact.Level__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>jquery331</members>
+        <members>select2</members>
+        <name>StaticResource</name>
+    </types>
+    <version>46.0</version>
+</Package>
